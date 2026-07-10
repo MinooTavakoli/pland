@@ -1,3 +1,6 @@
+import { IoMenu } from "react-icons/io5";
+import { CiShoppingBasket } from "react-icons/ci";
+import { IoWalletOutline } from "react-icons/io5";
 import { MenuItem, NavbarItem } from "../types/menu";
 
 export const navbarItems: NavbarItem[] = [
@@ -5,16 +8,19 @@ export const navbarItems: NavbarItem[] = [
     id: "categories",
     title: "دسته بندی محصولات",
     megaMenu: true,
+    icon: <IoMenu size={22} />,
   },
   {
-    id: "installment",
+    id: "origin",
     title: "خرید سازمانی",
     href: "/origin",
+    icon: <CiShoppingBasket size={25} />,
   },
   {
     id: "installment",
     title: "خرید اقساطی",
     href: "/installment",
+    icon: <IoWalletOutline size={22} />,
   },
   {
     id: "contact",

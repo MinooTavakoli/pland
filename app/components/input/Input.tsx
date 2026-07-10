@@ -48,7 +48,7 @@ export default function Input<T extends FieldValues>({
 
           <div
             className={clsx(
-              "flex items-center rounded-xl transition",
+              "flex items-center rounded-xl transition w-full",
               sizeClasses[size],
               variantClasses[variant],
               fieldState.error ? "border-red-500" : "",

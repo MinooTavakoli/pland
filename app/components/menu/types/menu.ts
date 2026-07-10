@@ -13,4 +13,5 @@ export interface NavbarItem {
   title: string;
   href?: string;
   megaMenu?: boolean;
+  icon?: ReactNode;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
@@ -22,27 +22,42 @@ export default function Navbar() {
 
   const { control } = useForm<FormValues>();
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [open]);
+
   return (
     <>
       <Backdrop open={open} onClose={() => setOpen(false)} />
 
       <header className="relative z-50 border-b bg-white">
-        <div className="bg-blue-450 py-2 flex items-center justify-center text-white text-2xl">
+        <div className="bg-blue-450 py-2.5 flex items-center justify-center text-white text-xl font-bold">
           ✨ به دنیای قطعات کامپیوتری پی‌لند خوش آمدید ✨
         </div>
         <div className="container mx-auto">
           <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-4">
-              <div>
+            <div className="flex items-center gap-5">
+              <Link href="/">
                 <Image src={logo} alt="logo" width={46} />
-              </div>
-              <div>
+              </Link>
+              <div className="w-[40vw]">
                 <Input
                   control={control}
                   name="search"
                   leftIcon={<FiSearch size={20} />}
                   placeholder="جستجو کنید ..."
-                  className="!bg-gray-200"
+                  variant="filled"
                 />
               </div>
             </div>
@@ -58,27 +73,34 @@ export default function Navbar() {
               </Link>
             </div>
           </div>
-          <ul className="flex h-16 items-center gap-10">
-            {navbarItems?.map((item) => (
-              <li key={item.id}>
-                {item.megaMenu ? (
-                  <button
-                    type="button"
-                    onClick={() => setOpen((prev) => !prev)}
-                    className="font-semibold transition hover:text-blue-750 cursor-pointer"
-                  >
-                    {item.title}
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href!}
-                    className="transition hover:text-blue-750"
-                  >
-                    {item.title}
-                  </Link>
-                )}
-              </li>
-            ))}
+          <ul className="flex h-16 items-center gap-10 text-sm">
+            {navbarItems?.map((item) => {
+              return (
+                <li key={item?.id}>
+                  {item?.megaMenu ? (
+                    <div
+                      onClick={() => setOpen((prev) => !prev)}
+                      className="font-semibold transition hover:text-blue-750 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1">
+                        {item?.icon && item.icon}
+                        <span>{item.title}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Link
+                      href={item.href!}
+                      className="transition hover:text-blue-750"
+                    >
+                      <div className="flex items-center gap-1">
+                        {item?.icon && item.icon}
+                        <span>{item.title}</span>
+                      </div>
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
 
