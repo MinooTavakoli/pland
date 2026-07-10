@@ -6,7 +6,7 @@
 export default function SwaggerPage() {
   return (
     <iframe
-      title="Padimo Gold API Documentation"
+      title="pland API Documentation"
       src="/swagger-ui.html"
       style={{
         display: "block",

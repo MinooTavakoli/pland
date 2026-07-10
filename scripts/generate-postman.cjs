@@ -215,7 +215,7 @@ function convert(spec) {
   return {
     collection: {
       info: {
-        name: spec.info?.title || "Padimo Gold API",
+        name: spec.info?.title || "pland API",
         description: spec.info?.description || "",
         schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       },

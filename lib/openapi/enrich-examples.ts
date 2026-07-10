@@ -349,7 +349,7 @@ export const ROUTE_SUCCESS_EXAMPLES: Record<
   "/api/admin/sms": { get: paginatedExamples.adminSms },
   "/api/admin/audit-logs": { get: paginatedExamples.adminAuditLogs },
   "/api/admin/settings": {
-    get: { settings: { defaultShippingCost: "5000000", siteName: "Padimo Gold" } },
+    get: { settings: { defaultShippingCost: "5000000", siteName: "pland" } },
     put: { success: true, message: "Settings updated", settings: { defaultShippingCost: "5000000" } },
   },
 };

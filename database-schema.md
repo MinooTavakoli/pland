@@ -1,6 +1,6 @@
 # Database Schema
 
-Entity-relationship diagrams for the Padimo Gold PostgreSQL database, generated from [`prisma/schema.prisma`](../prisma/schema.prisma).
+Entity-relationship diagrams for the pland PostgreSQL database, generated from [`prisma/schema.prisma`](../prisma/schema.prisma).
 
 Prisma creates implicit join tables for many-to-many relations (e.g. `_ProductCategories`, `_DiscountAssignedUsers`).
 

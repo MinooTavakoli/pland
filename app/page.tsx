@@ -102,7 +102,7 @@ export default function HomePage() {
 
           <div className="hidden md:col-span-4 bg-[#f5e7d6] md:flex flex-col items-end p-3 lg:p-10 relative">
             <div className="text-3xl font-bold tracking-[6px] pl-4 lg:pl-28">
-              PADIMO
+              pland
             </div>
             <div className="text-[#dccfc0] -rotate-90 text-4xl lg:text-8xl absolute left-[-90px] lg:left-[-300px] top-[240px] lg:top-[410px]">
               UNPARALLELED

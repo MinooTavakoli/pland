@@ -11,10 +11,10 @@ const serverUrl =
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
-    title: "Padimo Gold API",
+    title: "pland API",
     version: "1.0.0",
     description: [
-      "REST API for Padimo Gold — online gold jewelry store",
+      "REST API for pland — online gold jewelry store",
       "",
       "**Authentication:**",
       "- Customer: `POST /api/auth/send-otp`, then `POST /api/auth/verify-otp` → `site-auth` cookie",
@@ -22,7 +22,7 @@ export const openApiSpec = {
       "",
       "In Swagger UI, click **Authorize** and enter the cookie value (or use a browser session where you are already logged in).",
     ].join("\n"),
-    contact: { name: "Padimo Gold" },
+    contact: { name: "pland" },
   },
   servers: [{ url: serverUrl, description: "Current server" }],
   tags: openApiTags,
