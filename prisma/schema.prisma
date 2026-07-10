@@ -1,0 +1,644 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Enums
+// ──────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  KIDS
+  UNISEX
+}
+
+enum ProductStatus {
+  DRAFT
+  AVAILABLE
+  UNAVAILABLE
+  RESERVED
+  SOLD
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING // awaiting payment
+  PAID // paid, awaiting processing
+  PROCESSING // being prepared
+  SHIPPED // handed to courier
+  DELIVERED // delivered to customer
+  COMPLETED // finished (after review window)
+  CANCELED
+  FAILED
+}
+
+enum PaymentMethod {
+  ONLINE
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REJECTED
+  REFUNDED
+}
+
+enum ShippingMethod {
+  COURIER // پیک فروشگاه
+  POST
+  TIPAX
+}
+
+enum GiftBagType {
+  NORMAL
+  WOODEN
+  VIP
+  OCCASION
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DiscountTarget {
+  ALL
+  VIP
+  INACTIVE
+  SPECIFIC
+}
+
+enum BannerPosition {
+  HOME_SLIDER
+  AD_BANNER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum SmsType {
+  OTP
+  ORDER
+  PAYMENT
+  SHIPPING
+  DELIVERY
+  DISCOUNT
+  PROMO
+}
+
+enum SmsStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  LOGIN
+  LOGOUT
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Users & Auth
+// ──────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            Int            @id @default(autoincrement())
+  phone         String         @unique
+  secret        String
+  role          Role           @default(USER)
+  firstName     String?
+  lastName      String?
+  email         String?
+  birthDate     DateTime?
+  isVip         Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  totalSpent    BigInt         @default(0)
+  ordersCount   Int            @default(0)
+  lastOrderAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  addresses     Address[]
+  cart          Cart?
+  orders        Order[]
+  wishlist      WishlistItem[]
+  reviews       Review[]
+  discountCodes DiscountCode[] @relation("DiscountAssignedUsers")
+  couponUsages  CouponUsage[]
+  posts         BlogPost[]
+}
+
+model Address {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  fullName  String?
+  phone     String?
+  province  String?
+  city      String
+  postal    String
+  address   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Catalog
+// ──────────────────────────────────────────────────────────────────────────
+
+model Category {
+  id           Int        @id @default(autoincrement())
+  title        String
+  slug         String     @unique
+  parentId     Int?
+  gender       Gender?
+  image        String?
+  description  String?
+  metaTitle    String?
+  metaDesc     String?
+  seoContent   String?
+  order        Int        @default(0)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  parent       Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  children     Category[] @relation("Subcategories")
+  products     Product[]  @relation("ProductCategories")
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  title     String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[] @relation("ProductTags")
+}
+
+model Occasion {
+  id        Int       @id @default(autoincrement())
+  title     String
+  slug      String    @unique // valentine | mother-day | woman-day | nowruz | yalda ...
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  products  Product[] @relation("ProductOccasions")
+}
+
+model Product {
+  id              Int            @id @default(autoincrement())
+  code            String         @unique
+  slug            String         @unique
+  title           String
+  gender          Gender         @default(UNISEX)
+  weight          Float
+  karat           Int            @default(18) // عیار
+  wage            Float          @default(0) // اجرت %
+  profit          Float          @default(0) // سود %
+  tax             Float          @default(0) // مالیات %
+  stock           Int            @default(0) // موجودی
+  priceCache      BigInt? // محاسبه‌شده بر اساس آخرین قیمت طلا
+  description     String?
+  specs           Json? // مشخصات فنی
+  images          String[]       @default([])
+  status          ProductStatus  @default(DRAFT)
+  isGift          Boolean        @default(false)
+  isNewCollection Boolean        @default(false)
+  isFeatured      Boolean        @default(false) // پیشنهادی
+  soldCount       Int            @default(0)
+  viewCount       Int            @default(0)
+  // SEO
+  metaTitle       String?
+  metaDesc        String?
+  canonical       String?
+  ogImage         String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  categories      Category[]     @relation("ProductCategories")
+  tags            Tag[]          @relation("ProductTags")
+  occasions       Occasion[]     @relation("ProductOccasions")
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  wishlistItems   WishlistItem[]
+  reviews         Review[]
+  campaigns       Campaign[]     @relation("CampaignProducts")
+}
+
+model GoldPrice {
+  id        Int      @id @default(autoincrement())
+  price     BigInt
+  createdAt DateTime @default(now())
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Gift bags (بگ)
+// ──────────────────────────────────────────────────────────────────────────
+
+model GiftBag {
+  id          Int         @id @default(autoincrement())
+  type        GiftBagType @default(NORMAL)
+  title       String
+  image       String?
+  price       BigInt      @default(0)
+  stock       Int         @default(0)
+  description String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orders      Order[]
+  carts       Cart[]
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Wishlist
+// ──────────────────────────────────────────────────────────────────────────
+
+model WishlistItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  productId Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Cart
+// ──────────────────────────────────────────────────────────────────────────
+
+model Cart {
+  id             Int           @id @default(autoincrement())
+  userId         Int           @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  giftBagId      Int?
+  giftBag        GiftBag?      @relation(fields: [giftBagId], references: [id])
+  discountCodeId Int?
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  items          CartItem[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Orders & Payments
+// ──────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id                Int            @id @default(autoincrement())
+  orderNumber       String         @unique
+  userId            Int
+  user              User           @relation(fields: [userId], references: [id])
+  status            OrderStatus    @default(PENDING)
+  // contact / address snapshot
+  fullName          String
+  phone             String
+  email             String?
+  province          String?
+  city              String
+  postal            String
+  address           String
+  birthDate         DateTime?
+  note              String?
+  // shipping
+  shippingMethod    ShippingMethod @default(COURIER)
+  shippingCost      BigInt         @default(0)
+  deliverySlotId    Int?
+  deliverySlot      DeliverySlot?  @relation(fields: [deliverySlotId], references: [id])
+  deliveryDate      DateTime?
+  deliveryTime      String?
+  // gift bag snapshot
+  giftBagId         Int?
+  giftBag           GiftBag?       @relation(fields: [giftBagId], references: [id])
+  giftBagPrice      BigInt         @default(0)
+  // discount
+  discountCodeId    Int?
+  discountCode      DiscountCode?  @relation(fields: [discountCodeId], references: [id])
+  discountAmount    BigInt         @default(0)
+  // totals
+  goldPriceSnapshot BigInt?
+  itemsTotal        BigInt         @default(0)
+  total             BigInt
+  trackingCode      String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  items             OrderItem[]
+  tx                Transaction?
+  invoice           Invoice?
+  review            Review?
+}
+
+model OrderItem {
+  id           Int      @id @default(autoincrement())
+  orderId      Int
+  productId    Int?
+  title        String
+  weight       Float
+  price        BigInt // قیمت نهایی هر واحد
+  goldBase     BigInt   @default(0)
+  wageAmount   BigInt   @default(0)
+  profitAmount BigInt   @default(0)
+  taxAmount    BigInt   @default(0)
+  quantity     Int      @default(1)
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product? @relation(fields: [productId], references: [id])
+}
+
+model DeliverySlot {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  fromHour  String
+  toHour    String
+  capacity  Int      @default(1)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Transaction {
+  id          Int           @id @default(autoincrement())
+  orderId     Int           @unique
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method      PaymentMethod @default(ONLINE)
+  amount      BigInt
+  status      PaymentStatus @default(PENDING)
+  bankNumber  String?
+  refId       String? // gateway ref id / tracking
+  receiptUrl  String? // manual receipt image
+  description String?
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Invoice {
+  id            Int           @id @default(autoincrement())
+  orderId       Int           @unique
+  invoiceNumber String        @unique
+  total         BigInt
+  createdAt     DateTime      @default(now())
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+}
+
+model InvoiceItem {
+  id        Int     @id @default(autoincrement())
+  invoiceId Int
+  title     String
+  weight    Float
+  goldPrice BigInt
+  wage      BigInt
+  profit    BigInt
+  tax       BigInt
+  total     BigInt
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Reviews (نظرسنجی)
+// ──────────────────────────────────────────────────────────────────────────
+
+model Review {
+  id        Int          @id @default(autoincrement())
+  userId    Int
+  productId Int
+  orderId   Int?         @unique
+  rating    Int // 1..5
+  comment   String?
+  status    ReviewStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order     Order?       @relation(fields: [orderId], references: [id])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Discounts & Coupons
+// ──────────────────────────────────────────────────────────────────────────
+
+model DiscountCode {
+  id            Int            @id @default(autoincrement())
+  code          String         @unique
+  type          DiscountType   @default(PERCENT)
+  value         Int // درصد یا مبلغ ثابت
+  maxDiscount   BigInt? // سقف تخفیف برای درصدی
+  minOrder      BigInt         @default(0)
+  target        DiscountTarget @default(ALL)
+  usageLimit    Int? // کل دفعات مجاز
+  perUserLimit  Int            @default(1)
+  usedCount     Int            @default(0)
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  assignedUsers User[]         @relation("DiscountAssignedUsers")
+  usages        CouponUsage[]
+  carts         Cart[]
+  orders        Order[]
+}
+
+model CouponUsage {
+  id         Int          @id @default(autoincrement())
+  codeId     Int
+  userId     Int
+  orderId    Int?
+  createdAt  DateTime     @default(now())
+  code       DiscountCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Campaigns
+// ──────────────────────────────────────────────────────────────────────────
+
+model Campaign {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  banner      String?
+  description String?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[] @relation("CampaignProducts")
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// CMS: banners, faq, trust badges, blog, static pages
+// ──────────────────────────────────────────────────────────────────────────
+
+model Banner {
+  id        Int            @id @default(autoincrement())
+  title     String?
+  image     String
+  link      String?
+  position  BannerPosition @default(HOME_SLIDER)
+  order     Int            @default(0)
+  isActive  Boolean        @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  category  String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrustBadge {
+  id        Int      @id @default(autoincrement())
+  title     String
+  image     String
+  link      String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogCategory {
+  id        Int        @id @default(autoincrement())
+  title     String
+  slug      String     @unique
+  metaTitle String?
+  metaDesc  String?
+  createdAt DateTime   @default(now())
+  posts     BlogPost[]
+}
+
+model BlogTag {
+  id        Int        @id @default(autoincrement())
+  title     String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  posts     BlogPost[] @relation("BlogPostTags")
+}
+
+model BlogPost {
+  id           Int           @id @default(autoincrement())
+  title        String
+  slug         String        @unique
+  excerpt      String?
+  content      String
+  coverImage   String?
+  status       PostStatus    @default(DRAFT)
+  authorId     Int?
+  categoryId   Int?
+  metaTitle    String?
+  metaDesc     String?
+  articleSchema Json?
+  faqSchema    Json?
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  author       User?         @relation(fields: [authorId], references: [id])
+  category     BlogCategory? @relation(fields: [categoryId], references: [id])
+  tags         BlogTag[]     @relation("BlogPostTags")
+}
+
+model StaticPage {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique // about | contact | terms | privacy
+  title     String
+  content   String
+  metaTitle String?
+  metaDesc  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Notifications / SMS log
+// ──────────────────────────────────────────────────────────────────────────
+
+model SmsMessage {
+  id        Int       @id @default(autoincrement())
+  phone     String
+  type      SmsType
+  message   String
+  status    SmsStatus @default(PENDING)
+  relatedId Int?
+  error     String?
+  createdAt DateTime  @default(now())
+  sentAt    DateTime?
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Audit log (امنیت)
+// ──────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         Int         @id @default(autoincrement())
+  actorId    Int?
+  actorRole  Role?
+  action     AuditAction
+  entity     String // Order | Product | User | Auth ...
+  entityId   String?
+  summary    String?
+  changes    Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Settings (key-value config: VIP threshold, store info, ...)
+// ──────────────────────────────────────────────────────────────────────────
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
